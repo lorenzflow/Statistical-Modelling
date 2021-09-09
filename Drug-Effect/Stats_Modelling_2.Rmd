@@ -1,5 +1,5 @@
 ---
-title: "Coursework"
+title: "Stats_Modelling_2"
 author: "Lorenz Wolf"
 date: "3/6/2020"
 output: html_document
@@ -12,7 +12,6 @@ library(ggplot2)
 
 ```{r}
 getwd()
-setwd('~/Desktop/Imperial College/Mathe/3rd Year/Term 2/Stats Modelling 2/Coursework')
 ```
 # Data Exploration
 ```{r}
