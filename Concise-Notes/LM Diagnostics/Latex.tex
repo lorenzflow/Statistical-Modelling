@@ -1,32 +1,206 @@
-# Model Diagnostics Cheatsheet
+\documentclass{article}
+%\usepackage[utf8]{inputenc}
+\setlength{\parindent}{0pt}
+\usepackage{color}
+\usepackage{xcolor}
+\usepackage{multicol}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{graphicx}
+\usepackage{fullpage}
+\usepackage{rotating}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{stmaryrd}
+\usepackage{tikz}
+\usepackage{verbatim}
+\usepackage{url}
+\usepackage{multicol}
+\usepackage{xr-hyper}
+\usepackage[lined,ruled]{algorithm2e}
+\usepackage{algpseudocode}
+\usepackage{biblatex}
+\addbibresource{refs.bib}
+\usepackage{geometry}
+ \geometry{
+ a4paper,
+ total={170mm,257mm},
+ left=20mm,
+ top=15mm,
+ }
+\usepackage{listings}
+\lstset{language=R,
+      basicstyle=\fontsize{9}{12}\ttfamily,
+      aboveskip={1.0\baselineskip},
+      belowskip={1.0\baselineskip},
+      columns=fixed,
+      extendedchars=true,
+      breaklines=true,
+      tabsize=4,
+      prebreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\hookleftarrow}},
+      frame=lines,
+      showtabs=false,
+      showspaces=false,
+      showstringspaces=false,
+      keywordstyle=\color[rgb]{0.627,0.126,0.941},
+      commentstyle=\color[rgb]{0.133,0.545,0.133},
+      stringstyle=\color[rgb]{01,0,0},
+      numbers=left,
+      numberstyle=\small,
+      stepnumber=1,
+      numbersep=10pt,
+      captionpos=t,
+      numbers=left,
+      stepnumber=1,
+      firstnumber=1,
+      numberfirstline=true
+    }
+\usetikzlibrary{automata}
+\usetikzlibrary{arrows}
+\usetikzlibrary{snakes}
 
-During my MSc we used to have an assessed project every monday. With a total of 9h to complete a project you can imagine that speed matters. 
-So usually I would write a quick summary of my prep the day before with practical tips and references to useful sources. 
-This is one of those summaries on model diagnostics for normal linear models (NLM).
+\newcommand{\ang}[1]{\langle #1 \rangle}
+\newcommand{\ra}{\rightarrow}
 
-In the following let Y be the response, p the number of covariates, n the number of observations, and X the design matrix. 
+% Register Machines
+\newcommand{\START}{\mathit{START}}
+\newcommand{\HALT}{\mathit{HALT}}
+
+\newcommand{\uinc}[2]{#1^+ \ra L_{#2}}
+\newcommand{\udec}[3]{#1^- \ra L_{#2}, L_{#3}}
+
+\newcommand{\iinc}[3]{L_{#1} & : \uinc{#2}{#3} \\}
+\newcommand{\idec}[4]{L_{#1} & : \udec{#2}{#3}{#4} \\}
+\newcommand{\ihalt}[1]{L_{#1} & : \HALT \\}
+
+\newcommand{\code}[1]{\ulcorner{#1}\urcorner}
+\newcommand{\ppair}[1]{\langle\hspace{-0.6ex}\langle #1 \rangle\hspace{-0.6ex}\rangle}
+\newcommand{\pair}[1]{\ang{#1}}
+
+\usepackage{amsmath}
+\renewcommand{\vec}[1]{\underline{#1}}
+\title{Model Diagnostics}
+\author{Lorenz Wolf}
+\date{January 2022}
+
+\begin{document}
+
+\maketitle
+
+
+\section{Introduction} 
+
+During my MSc we used to have an assessed project every Monday. With a total of 9h to complete a project you can imagine that speed matters. 
+Usually I would write some concise notes of my prep the day before with practical tips and references to useful sources. 
+This is one of those on model diagnostics for normal linear models (NLM) - this is not supposed to be a complete guide but rather a 'checklist' with some key ideas and practical notes.\\
+
+In the following let Y be the response, p the number of covariates, n the number of observations, and X the design matrix.\\
+
 Note: I wrote this markdown very quickly, so notation is not very clear for now - might update it later
 
-## Coefficient of determination $R^2$
-- A measure of the goodness of fit for a NLM
-- Larger models with more paramters will have a smaller residual sum of squares (RSS)
+\section{Coefficient of determination $R^2$}
+\begin{itemize}
+    \item A measure of the goodness of fit for a NLM
+    \item Larger models with more parameters will have a smaller residual sum of squares (RSS)
+\end{itemize}
 For models with an intercept we have: $$R^2 = 1 - \frac{RSS}{\sum_{i=1}^n (y_i-\bar{y}_i)^2}$$
 which means $0 \leq R^2 \leq 1$
-- The $R^2$ can be interpreted as the proportion of variance in the data that is explained by the model
+\begin{itemize}
+    \item The $R^2$ can be interpreted as the proportion of variance in the data that is explained by the model
+\end{itemize}
 
-## Adjusted $R^2$
+\section{Adjusted $R^2$}
 $$\bar{R}^2 = 1 - \frac{RSS}{\sum_{i=1}^n (y_i-\bar{y}_i)^2} \frac{n-1}{n-p}$$
-- takes into account the number of model parameters
-- can be negative
-- tries to balance out the effect of decreasing RSS when increasing the number of parameters
+\begin{itemize}
+    \item takes into account the number of model parameters
+    \item can be negative
+    \item tries to balance out the effect of decreasing RSS when increasing the number of parameters
+\end{itemize}
 
-## Outliers
+\section{Model Checking}
+\begin{itemize}
+    \item F-Test and T-test results (p-values) can not be trusted if model is not satisfying assumptions
+    \item QQ-plot to check normality
+    \item Y against $x_i$ to check linearity of mean
+    \item residual plots to check homoscedasticity
+    \item partial regression (added variable plots) to investigate the effect of a particular predictor on the dependent variable while holding all other predictor variables constant - use \textbf{avPlots(lm)} from the car package
+    \item partial residual plots for better detection of non-linearity, use \textbf{prplot(lm, variable)} from the faraway package
+\end{itemize}
 
-Potential causes of outliers can be: errors in data recording, data is a mixture of different populations, a bad model
-For 2 or only 1 variable outliers can easily be detected for example via: boxplots, scatterplots, residuals.
+\section{Outliers}
 
-### Residuals
+Potential causes of outliers can be: errors in data recording, data is a mixture of different populations, a bad model.
+For 2 or only 1 variable outliers can easily be detected for example via: boxplots, scatterplots, residuals.\\
 
-- $e = Y-\hat{Y} = (I_n - P)Y$, where $P=X(X^TX)^{-1}X^T$
-- $cov(e) = \sigma^2(I_n-P)$ and $E(e)=0$ and it follows $e\sim N(0,\sigma^2(I_n-P))$
-- 
+In general it is always sensible to consider several measures to identify potential outliers.
+
+\subsection{Residuals}
+\begin{itemize}
+    \item $e = Y-\hat{Y} = (I_n - P)Y$, where $P=X(X^TX)^{-1}X^T$
+    \item $cov(e) = \sigma^2(I_n-P)$ and $E(e)=0$ and it follows $e\sim N(0,\sigma^2(I_n-P))$
+    \item \textbf{Standardized residuals} $\left( \frac{e_i}{\sqrt{\sigma^2(I_n-P)_{ii}}}\sim N(0,1)\; \text{for}\; i=1,...,n \right)$ more effective for detecting outliers, since account for residuals having slightly different variances
+    \item However, $\sigma^2$ unknown hence need estimate $\hat{\sigma}^2$
+    \item \textbf{Studentized residuals} $\left( r_i := \frac{e_i}{\sqrt{\hat{\sigma}^2(I_n-P)_{ii}}}\; \text{for}\; i=1,...,n \right)$ loose normality but should be approximately normal
+    \item Plots of $r_i$ against any other variable should not reveal any trends or patterns
+\end{itemize}
+
+\subsection{Heteroscedastic errors}
+Non constant variance, can check this by a regression of for example residuals on fitted values ($\hat{Y}$).\\
+\textbf{Fix:} transformation of variables, weighted least squares (downweight observations with high variance)
+
+\subsection{Leverages}
+$h_{ii} = 1-P_{ii}$ is leverage of observation i.
+\begin{itemize}
+    \item high leverage implies small variance
+    \item look at observations with leverage $h_{ii} > \frac{2r}{n}$ where $r = rank(X)$ (this compares the leverage to the average of the leverages $\frac{r}{n}$
+\end{itemize}
+
+\subsection{Deleted residuals}
+Deleted residuals are obtained by fitting the model without the ith observation.
+\begin{itemize}
+    \item Fit model excluding ith observation
+    \item predict ith observation, denote expectation by $\hat{Y}_{(i)}$
+    \item the deleted residual is $d_i = Y_i - \hat{Y}_{(i)}$
+    \item can be obtained without fitting a new model by $d_i = \frac{e_i}{1-h_{ii}}$
+    \item estimated variance of $d_i$ is $\frac{\hat{\sigma}_{(i)}^2}{1-h_{ii}},$ where $\hat{\sigma}_{(i)}^2 = \frac{RSS}{n-1}$ (RSS with ith case omitted)
+\end{itemize}
+\textbf{Studentized deleted residuals} allow hypothesis testing. $$t_i = \frac{d_i}{\sqrt{\hat{\sigma}_{(i)}^2/(1-h_{ii})}} = \frac{e_i}{\sqrt{\hat{\sigma}_{(i)}^2(1-h_{ii})}}, \quad t_i \sim t_{n-p-1} \text{(assuming correct model)}$$
+\textbf{How to test whether an observation is an outlier?}
+Let $T\sim t_{n-p-1}$ and $t_{\alpha/2}$ s.t. $P(-t_{\alpha/2} \leq T \leq t_{\alpha/2}) = 1- \alpha$. Then $\mathcal{I} = (-t_{\alpha/2}, t_{\alpha/2})$ is a $ 1- \alpha$ confidence interval for $t_i$, thus if $t_i \notin \mathcal{I}$ have evidence to reject $H_0$: $t_i \sim t_{n-p-1}$.
+
+\subsection{Cook's distance}
+The Cook's distance
+$$c_i = r^2_i \frac{h_{ii}}{(1-h_{ii})r}, \quad r = rank(X)$$
+combines the residual and the leverage in one measure and is crucial for outlier detection. 
+
+\subsection{Some useful commands}
+\begin{itemize}
+    \item influence(model) where model is an lm object in R. This gives the leave one out change in parameters and $\hat{\sigma}_{(i)}^2$
+    \item identify(.) for interactive point selection in scatter plot (Faraway p.77)
+\end{itemize}
+
+
+\section{Multicollinearity}
+Multicollinearity is when $X^TX$ is close to singular. This leads to:
+\begin{itemize}
+    \item imprecise least squares estimates $\hat{\beta}$
+    \item inflated standard errors, which means that t-tests performed on the paramter estimates may fail to show significance
+    \item the model will be sensitive to measurement errors (small change in y leads to large change in $\beta$)
+\end{itemize}
+How to detect multicollinearity:
+\begin{itemize}
+    \item check the correlation matrix of the predictors for high correlations between them
+    \item consider the variance inflation factors $\frac{1}{1-R_j^2}$, where $R_j^2$ is the $R^2$ value obtained by regressing predictor $x_j$ on the other predictors. Note that $var(\hat{\beta}_j) = \sigma^2 \frac{1}{1-R^2_j} \frac{1}{\sum_i (X_ij - \bar{x}_j)^2}$
+    \item to check the singularity of X check the condition number $\sqrt{\frac{\lambda_1}{\lambda_p}}$, use $eigen(X^TX)$ to obtain the eigen decomposition
+\end{itemize}
+
+\section{Some useful pointers}
+\begin{itemize}
+    \item In R var.test(.) to test whether variances of two groups are equal, test statistic ratio of variances (Faraway p.61)
+    \item Transformation or weighted least squares (Faraway p.62), e.g. $h(Y) = log(Y)$ or $h(Y) = \sqrt{Y}$
+    \item long-tailed: Cauchy (Faraway p.65)
+    \item Shapiro Wilk test for normality (Faraway p.66)
+\end{itemize}
+
+The page numbers refer to 'Linear Models with R' by J. Faraway, pdf available here: \\http://www.utstat.toronto.edu/~brunner/books/LinearModelsWithR.pdf
+
+\end{document}
